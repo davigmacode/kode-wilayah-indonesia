@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "build:generator": "tsc ./bin/generate.ts",
-    "generate": "node ./bin/generate.js"
+    "generate": "node --env-file=.env ./bin/generate.js"
   },
   "dependencies": {
     "fast-csv": "^5.0.1",

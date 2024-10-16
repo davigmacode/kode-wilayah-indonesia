@@ -39,9 +39,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var path_1 = require("path");
 var fs_1 = require("fs");
 var fast_csv_1 = require("fast-csv");
-var DATA_PATH = './data/kode-wilayah-permen-2022.csv';
-var DATA_CODE = 'kode';
-var DATA_NAME = 'nama';
+var DATA_PATH = (0, path_1.resolve)(__dirname, '../data');
+var DATA_FILE = process.env.DATA_FILE || 'kode-wilayah.csv';
+var DATA_CODE = process.env.DATA_HEADER_CODE || 'kode';
+var DATA_NAME = process.env.DATA_HEADER_NAME || 'nama';
+var CODE_SEPARATOR = process.env.DATA_CODE_SEPARATOR || '';
 var CODE_SEGMENT = {
     provinces: [2],
     regencies: [2, 2],
@@ -50,7 +52,7 @@ var CODE_SEGMENT = {
 };
 function getCodeLength(resource) {
     var segment = CODE_SEGMENT[resource];
-    var separator = segment.length > 1 ? segment.length - 1 : 0;
+    var separator = CODE_SEPARATOR.length * (segment.length > 1 ? segment.length - 1 : 0);
     return segment.reduce(function (a, b) { return a + b; }) + separator;
 }
 var PROVINCES_CODE_LENGTH = getCodeLength('provinces');
@@ -62,7 +64,8 @@ function getData() {
         return __generator(this, function (_a) {
             return [2 /*return*/, new Promise(function (resolve, reject) {
                     var result = [];
-                    var stream = (0, fs_1.createReadStream)(DATA_PATH);
+                    var filepath = (0, path_1.join)(DATA_PATH, DATA_FILE);
+                    var stream = (0, fs_1.createReadStream)(filepath);
                     (0, fast_csv_1.parseStream)(stream, { headers: true })
                         .on('error', function (error) { return reject(error); })
                         .on('data', function (row) {

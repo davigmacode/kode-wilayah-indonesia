@@ -1,11 +1,13 @@
-import { dirname } from 'path';
+import { dirname, resolve as pathResolve, join as pathJoin } from 'path';
 import { createReadStream, existsSync, mkdirSync, writeFile } from 'fs';
 import { parseStream } from 'fast-csv';
 
-const DATA_PATH = './data/kode-wilayah-permen-2022.csv';
-const DATA_CODE = 'kode';
-const DATA_NAME = 'nama';
+const DATA_PATH = pathResolve(__dirname, '../data');
+const DATA_FILE = process.env.DATA_FILE || 'kode-wilayah.csv';
+const DATA_CODE = process.env.DATA_HEADER_CODE || 'kode';
+const DATA_NAME = process.env.DATA_HEADER_NAME || 'nama';
 
+const CODE_SEPARATOR = process.env.DATA_CODE_SEPARATOR || '';
 const CODE_SEGMENT = {
   provinces: [2],
   regencies: [2, 2],
@@ -17,7 +19,7 @@ type Resource = keyof typeof CODE_SEGMENT;
 
 function getCodeLength(resource: Resource): number {
   const segment = CODE_SEGMENT[resource];
-  const separator = segment.length > 1 ? segment.length - 1 : 0;
+  const separator = CODE_SEPARATOR.length * (segment.length > 1 ? segment.length - 1 : 0);
   return segment.reduce((a, b) => a + b) + separator;
 }
 
@@ -29,7 +31,8 @@ const VILLAGES_CODE_LENGTH = getCodeLength('villages');
 async function getData(): Promise<string[][]> {
   return new Promise((resolve, reject) => {
     const result: string[][] = [];
-    const stream = createReadStream(DATA_PATH);
+    const filepath = pathJoin(DATA_PATH, DATA_FILE);
+    const stream = createReadStream(filepath);
     parseStream(stream, { headers: true })
       .on('error', error => reject(error))
       .on('data', row => {
