@@ -14,21 +14,23 @@ const CODE_SEGMENT = {
 
 type Resource = keyof typeof CODE_SEGMENT;
 
+type Endpoint = Resource | 'trace';
+
 interface Context {
   params: Params;
 }
 
 interface Params {
-  segment: [Resource, string?]
+  segment: [Endpoint, string?]
 }
 
 function getCodeLength(resource: Resource): number {
   const segment = CODE_SEGMENT[resource];
-  const separator = segment.length - 1;
+  const separator = segment.length > 1 ? segment.length - 1 : 0;
   return segment.reduce((a, b) => a + b) + separator;
 }
 
-async function getEntries(resource: Resource, prefix?: string) {
+async function getEntries(resource: Resource, prefix?: string): Promise<string[][]> {
   return new Promise((resolve, reject) => {
     const codeLength = getCodeLength(resource);
     const result: string[][] = [];
@@ -50,8 +52,42 @@ async function getEntries(resource: Resource, prefix?: string) {
   });
 }
 
+async function getInfo(code: string) {
+  return new Promise((resolve, reject) => {
+    let result: Record<string, string[] | undefined> = {};
+    const tracer = [
+      ['province', 'provinces'],
+      ['regency', 'regencies'],
+      ['district', 'districts'],
+      ['village', 'villages'],
+    ];
+    const stream = createReadStream(DATA_PATH);
+    parseStream(stream, { headers: true })
+      .on('error', error => reject(error))
+      .on('data', row => {
+        const c: string = row[DATA_CODE];
+        const n: string = row[DATA_NAME];
+        for (let i = 0; i < tracer.length; i++) {
+          const t = tracer[i];
+          const r = t[1] as Resource;
+          const k = t[0];
+          const len = getCodeLength(r);
+          if (c.length == len && c == code.substring(0, len)) {
+            result = { ...result, [k]: [c, n] };
+          }
+        }
+      })
+      .on('end', () => resolve(result));
+  });
+}
+
 export async function GET(_: Request, { params }: Context) {
-  const [resource, prefix] = params.segment;
-  const data = await getEntries(resource, prefix);
+  let data: unknown;
+  const [endpoint, code] = params.segment;
+  if (endpoint == 'trace') {
+    data = code != undefined ? await getInfo(code) : {};
+  } else {
+    data = await getEntries(endpoint, code);
+  }
   return Response.json(data);
 }
