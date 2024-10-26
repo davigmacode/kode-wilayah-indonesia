@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.insertMany = exports.insertOne = void 0;
+exports.resetEntries = resetEntries;
 var better_sqlite3_1 = __importDefault(require("better-sqlite3"));
 var config_1 = require("./config");
 var db = new better_sqlite3_1.default(config_1.DB_FILE);
@@ -17,4 +18,7 @@ exports.insertMany = db.transaction(function (items) {
         exports.insertOne.run(item.code, item.name, item.fullname);
     }
 });
+function resetEntries() {
+    db.exec('DELETE FROM wilayah');
+}
 exports.default = db;

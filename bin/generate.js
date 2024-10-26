@@ -86,7 +86,7 @@ function saveData(filename, data) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
             return [2 /*return*/, new Promise(function (resolve, reject) {
-                    var filepath = (0, path_1.join)(config_1.STATIC_PATH, filename);
+                    var filepath = (0, path_1.join)(process.cwd(), config_1.STATIC_PATH, filename);
                     var dir = (0, path_1.dirname)(filepath);
                     if (!(0, fs_1.existsSync)(dir)) {
                         (0, fs_1.mkdirSync)(dir, { recursive: true });
@@ -216,6 +216,7 @@ function main() {
                 case 8:
                     _a.sent();
                     log('Writing into database..');
+                    (0, database_1.resetEntries)();
                     (0, database_1.insertMany)(dbEntries);
                     database_1.default.close();
                     return [2 /*return*/];

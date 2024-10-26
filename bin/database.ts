@@ -19,6 +19,10 @@ export const insertMany = db.transaction((items: Wilayah[]) => {
   }
 });
 
+export function resetEntries() {
+  db.exec('DELETE FROM wilayah');
+}
+
 export interface Wilayah {
   code: string;
   name: string;

@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "build:generator": "tsc --esModuleInterop ./bin/generate.ts",
-    "generate": "node --env-file=.env ./bin/generate.js"
+    "generate:dev": "node --env-file=.env ./bin/generate.js",
+    "generate": "node ./bin/generate.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.5.0",

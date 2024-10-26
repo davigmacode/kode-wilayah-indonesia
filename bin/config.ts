@@ -1,10 +1,10 @@
 import path from 'path';
 
-export const STATIC_PATH = path.resolve(__dirname, '../', process.env.STATIC_PATH || './public');
+export const STATIC_PATH = process.env.STATIC_PATH || '/public';
 
-export const DATA_PATH = path.resolve(__dirname, '../', process.env.SOURCE_PATH || './data');
+export const DATA_PATH = process.env.SOURCE_PATH || '/data';
 export const DATA_FILE_NAME = process.env.SOURCE_FILE || 'kode-wilayah.csv';
-export const DATA_FILE = path.join(DATA_PATH, DATA_FILE_NAME);
+export const DATA_FILE = path.join(process.cwd(), DATA_PATH, DATA_FILE_NAME);
 
 export const FIELD_CODE = process.env.FIELD_CODE || 'kode';
 export const FIELD_NAME = process.env.FIELD_NAME || 'nama';
