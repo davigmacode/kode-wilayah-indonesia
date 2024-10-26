@@ -1,5 +1,5 @@
 import { type NextRequest } from 'next/server';
-import { datasource } from './datasource';
+import { searchByFullname } from '../db';
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   const limit = Number(searchParams.get('limit'));
   const skip = Number(searchParams.get('skip'));
 
-  const result = datasource.search(query);
-  const entries = result.splice(skip, limit).map((e) => e.item);
-  return Response.json({ skip, limit, entries, count: result.length });
+  const result = searchByFullname({ query, limit, skip });
+  console.log(result);
+  return Response.json(result);
 }
