@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -39,38 +62,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var path_1 = require("path");
 var fs_1 = require("fs");
 var fast_csv_1 = require("fast-csv");
-var DATA_PATH = (0, path_1.resolve)(__dirname, '../data');
-var DATA_FILE = process.env.DATA_FILE || 'kode-wilayah.csv';
-var DATA_CODE = process.env.DATA_HEADER_CODE || 'kode';
-var DATA_NAME = process.env.DATA_HEADER_NAME || 'nama';
-var CODE_SEPARATOR = process.env.DATA_CODE_SEPARATOR || '';
-var CODE_SEGMENT = {
-    provinces: [2],
-    regencies: [2, 2],
-    districts: [2, 2, 2],
-    villages: [2, 2, 2, 4],
-};
-function getCodeLength(resource) {
-    var segment = CODE_SEGMENT[resource];
-    var separator = CODE_SEPARATOR.length * (segment.length > 1 ? segment.length - 1 : 0);
-    return segment.reduce(function (a, b) { return a + b; }) + separator;
-}
-var PROVINCES_CODE_LENGTH = getCodeLength('provinces');
-var REGENCIES_CODE_LENGTH = getCodeLength('regencies');
-var DISTRICTS_CODE_LENGTH = getCodeLength('districts');
-var VILLAGES_CODE_LENGTH = getCodeLength('villages');
+var config_1 = require("./config");
+var database_1 = __importStar(require("./database"));
 function getData() {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
             return [2 /*return*/, new Promise(function (resolve, reject) {
                     var result = [];
-                    var filepath = (0, path_1.join)(DATA_PATH, DATA_FILE);
-                    var stream = (0, fs_1.createReadStream)(filepath);
+                    var stream = (0, fs_1.createReadStream)(config_1.DATA_FILE);
                     (0, fast_csv_1.parseStream)(stream, { headers: true })
                         .on('error', function (error) { return reject(error); })
                         .on('data', function (row) {
-                        var c = row[DATA_CODE];
-                        var n = row[DATA_NAME];
+                        var c = row[config_1.FIELD_CODE];
+                        var n = row[config_1.FIELD_NAME];
                         result.push([c, n]);
                     })
                         .on('end', function () { return resolve(result); });
@@ -78,10 +82,11 @@ function getData() {
         });
     });
 }
-function saveData(filepath, data) {
+function saveData(filename, data) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
             return [2 /*return*/, new Promise(function (resolve, reject) {
+                    var filepath = (0, path_1.join)(config_1.STATIC_PATH, filename);
                     var dir = (0, path_1.dirname)(filepath);
                     if (!(0, fs_1.existsSync)(dir)) {
                         (0, fs_1.mkdirSync)(dir, { recursive: true });
@@ -102,7 +107,7 @@ function log(message) {
 }
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var source, provinces, regencies, districts, villages, saveRegencies, saveDistricts, saveVillages, sourcemap, saveTrace;
+        var source, provinces, regencies, districts, villages, saveRegencies, saveDistricts, saveVillages, sourceMap, dbEntries, saveRegenciesTrace, saveDistricsTrace, saveVillagesTrace;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -111,55 +116,108 @@ function main() {
                     return [4 /*yield*/, getData()];
                 case 1:
                     source = _a.sent();
-                    provinces = source.filter(function (e) { return e[0].length == PROVINCES_CODE_LENGTH; });
-                    regencies = source.filter(function (e) { return e[0].length == REGENCIES_CODE_LENGTH; });
-                    districts = source.filter(function (e) { return e[0].length == DISTRICTS_CODE_LENGTH; });
-                    villages = source.filter(function (e) { return e[0].length == VILLAGES_CODE_LENGTH; });
-                    log('Writing provincies..');
-                    return [4 /*yield*/, saveData('./public/provinces.json', provinces)];
+                    provinces = source.filter(function (e) { return e[0].length == config_1.PROVINCES_CODE_LENGTH; });
+                    regencies = source.filter(function (e) { return e[0].length == config_1.REGENCIES_CODE_LENGTH; });
+                    districts = source.filter(function (e) { return e[0].length == config_1.DISTRICTS_CODE_LENGTH; });
+                    villages = source.filter(function (e) { return e[0].length == config_1.VILLAGES_CODE_LENGTH; });
+                    log('Generating static provincies..');
+                    return [4 /*yield*/, saveData('/provinces.json', provinces)];
                 case 2:
                     _a.sent();
-                    log('Writing regencies..');
+                    log('Generating static regencies..');
                     saveRegencies = provinces.map(function (p) {
                         var data = regencies.filter(function (r) { return r[0].startsWith(p[0]); });
-                        return saveData("./public/regencies/".concat(p[0], ".json"), data);
+                        return saveData("/regencies/".concat(p[0], ".json"), data);
                     });
                     return [4 /*yield*/, Promise.allSettled(saveRegencies)];
                 case 3:
                     _a.sent();
-                    log('Writing districts..');
+                    log('Generating static districts..');
                     saveDistricts = regencies.map(function (r) {
                         var data = districts.filter(function (d) { return d[0].startsWith(r[0]); });
-                        return saveData("./public/districts/".concat(r[0], ".json"), data);
+                        return saveData("/districts/".concat(r[0], ".json"), data);
                     });
                     return [4 /*yield*/, Promise.allSettled(saveDistricts)];
                 case 4:
                     _a.sent();
-                    log('Writing villages..');
+                    log('Generating static villages..');
                     saveVillages = districts.map(function (d) {
                         var data = villages.filter(function (v) { return v[0].startsWith(d[0]); });
-                        return saveData("./public/villages/".concat(d[0], ".json"), data);
+                        return saveData("/villages/".concat(d[0], ".json"), data);
                     });
                     return [4 /*yield*/, Promise.allSettled(saveVillages)];
                 case 5:
                     _a.sent();
                     log('Mapping data source..');
-                    sourcemap = new Map();
-                    source.forEach(function (e) { return sourcemap.set(e[0], e); });
-                    log('Writing trace..');
-                    saveTrace = villages.map(function (v) {
-                        var c = v[0];
-                        var data = {
-                            province: sourcemap.get(c.substring(0, PROVINCES_CODE_LENGTH)),
-                            regency: sourcemap.get(c.substring(0, REGENCIES_CODE_LENGTH)),
-                            district: sourcemap.get(c.substring(0, DISTRICTS_CODE_LENGTH)),
-                            village: v,
-                        };
-                        return saveData("./public/trace/".concat(c, ".json"), data);
+                    sourceMap = new Map();
+                    source.forEach(function (e) { return sourceMap.set(e[0], e); });
+                    dbEntries = [];
+                    provinces.forEach(function (e) {
+                        dbEntries.push({ code: e[0], name: e[1], fullname: e[1] });
                     });
-                    return [4 /*yield*/, Promise.allSettled(saveTrace)];
+                    log('Generating static regencies trace..');
+                    saveRegenciesTrace = regencies.map(function (e) {
+                        var _a, _b;
+                        var c = e[0];
+                        var data = {
+                            province: sourceMap.get(c.substring(0, config_1.PROVINCES_CODE_LENGTH)),
+                            regency: e,
+                        };
+                        var fullname = [
+                            (_a = data.province) === null || _a === void 0 ? void 0 : _a.at(1),
+                            (_b = data.regency) === null || _b === void 0 ? void 0 : _b.at(1),
+                        ].join(', ');
+                        dbEntries.push({ code: c, name: e[1], fullname: fullname });
+                        return saveData("/trace/".concat(c, ".json"), data);
+                    });
+                    return [4 /*yield*/, Promise.allSettled(saveRegenciesTrace)];
                 case 6:
                     _a.sent();
+                    log('Generating static districts trace..');
+                    saveDistricsTrace = districts.map(function (e) {
+                        var _a, _b, _c;
+                        var c = e[0];
+                        var data = {
+                            province: sourceMap.get(c.substring(0, config_1.PROVINCES_CODE_LENGTH)),
+                            regency: sourceMap.get(c.substring(0, config_1.REGENCIES_CODE_LENGTH)),
+                            district: e,
+                        };
+                        var fullname = [
+                            (_a = data.province) === null || _a === void 0 ? void 0 : _a.at(1),
+                            (_b = data.regency) === null || _b === void 0 ? void 0 : _b.at(1),
+                            (_c = data.district) === null || _c === void 0 ? void 0 : _c.at(1),
+                        ].join(', ');
+                        dbEntries.push({ code: c, name: e[1], fullname: fullname });
+                        return saveData("/trace/".concat(c, ".json"), data);
+                    });
+                    return [4 /*yield*/, Promise.allSettled(saveDistricsTrace)];
+                case 7:
+                    _a.sent();
+                    log('Generating static villages trace..');
+                    saveVillagesTrace = villages.map(function (e) {
+                        var _a, _b, _c, _d;
+                        var c = e[0];
+                        var data = {
+                            province: sourceMap.get(c.substring(0, config_1.PROVINCES_CODE_LENGTH)),
+                            regency: sourceMap.get(c.substring(0, config_1.REGENCIES_CODE_LENGTH)),
+                            district: sourceMap.get(c.substring(0, config_1.DISTRICTS_CODE_LENGTH)),
+                            village: e,
+                        };
+                        var fullname = [
+                            (_a = data.province) === null || _a === void 0 ? void 0 : _a.at(1),
+                            (_b = data.regency) === null || _b === void 0 ? void 0 : _b.at(1),
+                            (_c = data.district) === null || _c === void 0 ? void 0 : _c.at(1),
+                            (_d = data.village) === null || _d === void 0 ? void 0 : _d.at(1),
+                        ].join(', ');
+                        dbEntries.push({ code: c, name: e[1], fullname: fullname });
+                        return saveData("/trace/".concat(c, ".json"), data);
+                    });
+                    return [4 /*yield*/, Promise.allSettled(saveVillagesTrace)];
+                case 8:
+                    _a.sent();
+                    log('Writing into database..');
+                    (0, database_1.insertMany)(dbEntries);
+                    database_1.default.close();
                     return [2 /*return*/];
             }
         });

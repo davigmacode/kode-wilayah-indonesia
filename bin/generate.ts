@@ -1,51 +1,31 @@
-import { dirname, resolve as pathResolve, join as pathJoin } from 'path';
+import { dirname, join as pathJoin } from 'path';
 import { createReadStream, existsSync, mkdirSync, writeFile } from 'fs';
 import { parseStream } from 'fast-csv';
-
-const DATA_PATH = pathResolve(__dirname, '../data');
-const DATA_FILE = process.env.DATA_FILE || 'kode-wilayah.csv';
-const DATA_CODE = process.env.DATA_HEADER_CODE || 'kode';
-const DATA_NAME = process.env.DATA_HEADER_NAME || 'nama';
-
-const CODE_SEPARATOR = process.env.DATA_CODE_SEPARATOR || '';
-const CODE_SEGMENT = {
-  provinces: [2],
-  regencies: [2, 2],
-  districts: [2, 2, 2],
-  villages: [2, 2, 2, 4],
-};
-
-type Resource = keyof typeof CODE_SEGMENT;
-
-function getCodeLength(resource: Resource): number {
-  const segment = CODE_SEGMENT[resource];
-  const separator = CODE_SEPARATOR.length * (segment.length > 1 ? segment.length - 1 : 0);
-  return segment.reduce((a, b) => a + b) + separator;
-}
-
-const PROVINCES_CODE_LENGTH = getCodeLength('provinces');
-const REGENCIES_CODE_LENGTH = getCodeLength('regencies');
-const DISTRICTS_CODE_LENGTH = getCodeLength('districts');
-const VILLAGES_CODE_LENGTH = getCodeLength('villages');
+import {
+  DATA_FILE, STATIC_PATH, FIELD_CODE, FIELD_NAME,
+  PROVINCES_CODE_LENGTH, REGENCIES_CODE_LENGTH,
+  DISTRICTS_CODE_LENGTH, VILLAGES_CODE_LENGTH
+} from './config';
+import db, { insertMany, type Wilayah } from './database';
 
 async function getData(): Promise<string[][]> {
   return new Promise((resolve, reject) => {
     const result: string[][] = [];
-    const filepath = pathJoin(DATA_PATH, DATA_FILE);
-    const stream = createReadStream(filepath);
+    const stream = createReadStream(DATA_FILE);
     parseStream(stream, { headers: true })
       .on('error', error => reject(error))
       .on('data', row => {
-        const c: string = row[DATA_CODE];
-        const n: string = row[DATA_NAME];
+        const c: string = row[FIELD_CODE];
+        const n: string = row[FIELD_NAME];
         result.push([c, n]);
       })
       .on('end', () => resolve(result));
   });
 }
 
-async function saveData(filepath: string, data: unknown) {
+async function saveData(filename: string, data: unknown) {
   return new Promise((resolve, reject) => {
+    const filepath = pathJoin(STATIC_PATH, filename);
     const dir = dirname(filepath);
     if (!existsSync(dir)) {
       mkdirSync(dir, { recursive: true });
@@ -71,46 +51,97 @@ async function main() {
   const districts = source.filter((e) => e[0].length == DISTRICTS_CODE_LENGTH);
   const villages = source.filter((e) => e[0].length == VILLAGES_CODE_LENGTH);
 
-  log('Writing provincies..');
-  await saveData('./public/provinces.json', provinces);
+  log('Generating static provincies..');
+  await saveData('/provinces.json', provinces);
 
-  log('Writing regencies..');
+  log('Generating static regencies..');
   const saveRegencies = provinces.map((p) => {
     const data = regencies.filter((r) => r[0].startsWith(p[0]));
-    return saveData(`./public/regencies/${p[0]}.json`, data);
+    return saveData(`/regencies/${p[0]}.json`, data);
   });
   await Promise.allSettled(saveRegencies);
 
-  log('Writing districts..');
+  log('Generating static districts..');
   const saveDistricts = regencies.map((r) => {
     const data = districts.filter((d) => d[0].startsWith(r[0]));
-    return saveData(`./public/districts/${r[0]}.json`, data);
+    return saveData(`/districts/${r[0]}.json`, data);
   });
   await Promise.allSettled(saveDistricts);
 
-  log('Writing villages..');
+  log('Generating static villages..');
   const saveVillages = districts.map((d) => {
     const data = villages.filter((v) => v[0].startsWith(d[0]));
-    return saveData(`./public/villages/${d[0]}.json`, data);
+    return saveData(`/villages/${d[0]}.json`, data);
   });
   await Promise.allSettled(saveVillages);
 
   log('Mapping data source..');
-  const sourcemap = new Map();
-  source.forEach((e) => sourcemap.set(e[0], e));
+  const sourceMap = new Map<string, string[]>();
+  source.forEach((e) => sourceMap.set(e[0], e));
 
-  log('Writing trace..');
-  const saveTrace = villages.map((v) => {
-    const c: string = v[0];
-    const data = {
-      province: sourcemap.get(c.substring(0, PROVINCES_CODE_LENGTH)),
-      regency: sourcemap.get(c.substring(0, REGENCIES_CODE_LENGTH)),
-      district: sourcemap.get(c.substring(0, DISTRICTS_CODE_LENGTH)),
-      village: v,
-    };
-    return saveData(`./public/trace/${c}.json`, data);
+  // populating db entries
+  const dbEntries: Wilayah[] = [];
+  provinces.forEach((e) => {
+    dbEntries.push({ code: e[0], name: e[1], fullname: e[1] });
   });
-  await Promise.allSettled(saveTrace);
+
+  log('Generating static regencies trace..');
+  const saveRegenciesTrace = regencies.map((e) => {
+    const c: string = e[0];
+    const data = {
+      province: sourceMap.get(c.substring(0, PROVINCES_CODE_LENGTH)),
+      regency: e,
+    };
+    const fullname = [
+      data.province?.at(1),
+      data.regency?.at(1),
+    ].join(', ');
+    dbEntries.push({ code: c, name: e[1], fullname });
+    return saveData(`/trace/${c}.json`, data);
+  });
+  await Promise.allSettled(saveRegenciesTrace);
+
+  log('Generating static districts trace..');
+  const saveDistricsTrace = districts.map((e) => {
+    const c: string = e[0];
+    const data = {
+      province: sourceMap.get(c.substring(0, PROVINCES_CODE_LENGTH)),
+      regency: sourceMap.get(c.substring(0, REGENCIES_CODE_LENGTH)),
+      district: e,
+    };
+    const fullname = [
+      data.province?.at(1),
+      data.regency?.at(1),
+      data.district?.at(1),
+    ].join(', ');
+    dbEntries.push({ code: c, name: e[1], fullname });
+    return saveData(`/trace/${c}.json`, data);
+  });
+  await Promise.allSettled(saveDistricsTrace);
+
+  log('Generating static villages trace..');
+  const saveVillagesTrace = villages.map((e) => {
+    const c: string = e[0];
+    const data = {
+      province: sourceMap.get(c.substring(0, PROVINCES_CODE_LENGTH)),
+      regency: sourceMap.get(c.substring(0, REGENCIES_CODE_LENGTH)),
+      district: sourceMap.get(c.substring(0, DISTRICTS_CODE_LENGTH)),
+      village: e,
+    };
+    const fullname = [
+      data.province?.at(1),
+      data.regency?.at(1),
+      data.district?.at(1),
+      data.village?.at(1),
+    ].join(', ');
+    dbEntries.push({ code: c, name: e[1], fullname });
+    return saveData(`/trace/${c}.json`, data);
+  });
+  await Promise.allSettled(saveVillagesTrace);
+
+  log('Writing into database..');
+  insertMany(dbEntries);
+  db.close();
 }
 
 main().then(() => log('Done.'));
