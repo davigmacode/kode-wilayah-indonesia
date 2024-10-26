@@ -10,6 +10,5 @@ export async function GET(req: NextRequest) {
   const skip = Number(searchParams.get('skip'));
 
   const result = searchByFullname({ query, limit, skip });
-  console.log(result);
   return Response.json(result);
 }

@@ -38,6 +38,7 @@ export const searchByFullname = db.transaction(({ query, limit = 25, skip = 0 }:
     WHERE fullname LIKE ?
     LIMIT ? OFFSET ?
   `).all(`%${query}%`, limit, skip);
+  console.log(entries);
 
   const total = db.prepare(`
     SELECT COUNT(*) AS count FROM wilayah
