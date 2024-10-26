@@ -6,7 +6,7 @@ import {
   PROVINCES_CODE_LENGTH, REGENCIES_CODE_LENGTH,
   DISTRICTS_CODE_LENGTH, VILLAGES_CODE_LENGTH
 } from './config';
-import db, { insertMany, resetEntries, type Wilayah } from './database';
+import { type Wilayah } from './database';
 
 async function getData(): Promise<string[][]> {
   return new Promise((resolve, reject) => {
@@ -140,9 +140,7 @@ async function main() {
   await Promise.allSettled(saveVillagesTrace);
 
   log('Writing into database..');
-  resetEntries();
-  insertMany(dbEntries);
-  db.close();
+  await saveData('/regions.json', dbEntries);
 }
 
 main().then(() => log('Done.'));

@@ -1,27 +1,4 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -63,7 +40,6 @@ var path_1 = require("path");
 var fs_1 = require("fs");
 var fast_csv_1 = require("fast-csv");
 var config_1 = require("./config");
-var database_1 = __importStar(require("./database"));
 function getData() {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
@@ -216,9 +192,9 @@ function main() {
                 case 8:
                     _a.sent();
                     log('Writing into database..');
-                    (0, database_1.resetEntries)();
-                    (0, database_1.insertMany)(dbEntries);
-                    database_1.default.close();
+                    return [4 /*yield*/, saveData('/regions.json', dbEntries)];
+                case 9:
+                    _a.sent();
                     return [2 /*return*/];
             }
         });
