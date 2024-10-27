@@ -28,17 +28,18 @@ insertMany(jsonData);
 
 interface SearchByFullnameProps {
   query: string;
-  limit?: number;
-  skip?: number;
+  limit: number;
+  skip: number;
 }
 
-export const searchByFullname = db.transaction(({ query, limit = 25, skip = 0 }: SearchByFullnameProps) => {
+export const searchByFullname = db.transaction(({ query, limit, skip }: SearchByFullnameProps) => {
   const entries = db.prepare(`
     SELECT * FROM wilayah
     WHERE fullname LIKE ?
     LIMIT ? OFFSET ?
   `).all(`%${query}%`, limit, skip);
-  console.log(entries);
+
+  if (limit == -1) return entries;
 
   const total = db.prepare(`
     SELECT COUNT(*) AS count FROM wilayah
