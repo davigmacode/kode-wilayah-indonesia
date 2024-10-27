@@ -6,7 +6,12 @@ import {
   PROVINCES_CODE_LENGTH, REGENCIES_CODE_LENGTH,
   DISTRICTS_CODE_LENGTH, VILLAGES_CODE_LENGTH
 } from './config';
-import { type Wilayah } from './database';
+
+interface Wilayah {
+  code: string;
+  name: string;
+  fullname: string;
+}
 
 async function getData(): Promise<string[][]> {
   return new Promise((resolve, reject) => {
