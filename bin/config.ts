@@ -19,6 +19,10 @@ export const CODE_SEGMENT = {
 
 export type Resource = keyof typeof CODE_SEGMENT;
 
+export function isValidResource(k: string): k is Resource {
+  return k in CODE_SEGMENT;
+}
+
 function getCodeLength(resource: Resource): number {
   const segment = CODE_SEGMENT[resource];
   const separator = CODE_SEPARATOR.length * (segment.length > 1 ? segment.length - 1 : 0);
@@ -30,7 +34,13 @@ export const REGENCIES_CODE_LENGTH = getCodeLength('regencies');
 export const DISTRICTS_CODE_LENGTH = getCodeLength('districts');
 export const VILLAGES_CODE_LENGTH = getCodeLength('villages');
 
-// export const DB_PATH = path.resolve(__dirname, '../', process.env.DB_PATH || './app/db');
+export const CODE_LENGTHS = {
+  provinces: PROVINCES_CODE_LENGTH,
+  regencies: REGENCIES_CODE_LENGTH,
+  districts: DISTRICTS_CODE_LENGTH,
+  villages: VILLAGES_CODE_LENGTH,
+};
+
 export const DB_PATH = process.env.DB_PATH || 'app/db';
 export const DB_NAME = process.env.DB_NAME || 'regions.db';
 export const DB_FILE = path.join(process.cwd(), DB_PATH, DB_NAME);
