@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
+import { CODE_LENGTHS, isValidResource } from '~/bin/src/config';
 
 const db = new Database(':memory:');
 db.pragma('journal_mode = WAL');
@@ -27,15 +28,24 @@ const jsonData = JSON.parse(fs.readFileSync(jsonFile, 'utf-8'));
 insertMany(jsonData);
 
 interface SearchByFullnameProps {
+  type: string;
   query: string;
   limit: number;
   skip: number;
 }
 
-export const searchByFullname = db.transaction(({ query, limit, skip }: SearchByFullnameProps) => {
+export const searchByFullname = db.transaction(({
+  type,
+  query,
+  limit,
+  skip
+}: SearchByFullnameProps) => {
+  const codeLength = isValidResource(type) ? CODE_LENGTHS[type] : -1;
+  const whereCode = codeLength != -1 ? `AND LENGTH(code)==${codeLength}` : '';
+
   const entries = db.prepare(`
     SELECT * FROM wilayah
-    WHERE fullname LIKE ?
+    WHERE fullname LIKE ? ${whereCode}
     LIMIT ? OFFSET ?
   `).all(`%${query}%`, limit, skip);
 
@@ -43,7 +53,7 @@ export const searchByFullname = db.transaction(({ query, limit, skip }: SearchBy
 
   const total = db.prepare(`
     SELECT COUNT(*) AS count FROM wilayah
-    WHERE fullname LIKE ?
+    WHERE fullname LIKE ? ${whereCode}
   `).get(`%${query}%`) as { count: number };
 
   return { entries, skip, limit, count: total.count };
