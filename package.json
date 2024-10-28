@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "build:generator": "tsc --esModuleInterop ./bin/generate.ts",
+    "build:generator": "tsc --esModuleInterop --outDir ./bin ./bin/src/generate.ts",
     "generate:dev": "node --env-file=.env ./bin/generate.js",
     "generate": "node ./bin/generate.js"
   },
