@@ -129,7 +129,7 @@ function main() {
                     source.forEach(function (e) { return sourceMap.set(e[0], e); });
                     dbEntries = [];
                     provinces.forEach(function (e) {
-                        dbEntries.push({ code: e[0], name: e[1], fullname: e[1] });
+                        dbEntries.push([e[0], e[1], '1']);
                     });
                     log('Generating static regencies trace..');
                     saveRegenciesTrace = regencies.map(function (e) {
@@ -139,11 +139,11 @@ function main() {
                             province: sourceMap.get(c.substring(0, config_1.PROVINCES_CODE_LENGTH)),
                             regency: e,
                         };
-                        var fullname = [
+                        var name = [
                             (_a = data.province) === null || _a === void 0 ? void 0 : _a.at(1),
                             (_b = data.regency) === null || _b === void 0 ? void 0 : _b.at(1),
                         ].join(', ');
-                        dbEntries.push({ code: c, name: e[1], fullname: fullname });
+                        dbEntries.push([c, name, '2']);
                         return saveData("/trace/".concat(c, ".json"), data);
                     });
                     return [4 /*yield*/, Promise.allSettled(saveRegenciesTrace)];
@@ -158,12 +158,12 @@ function main() {
                             regency: sourceMap.get(c.substring(0, config_1.REGENCIES_CODE_LENGTH)),
                             district: e,
                         };
-                        var fullname = [
+                        var name = [
                             (_a = data.province) === null || _a === void 0 ? void 0 : _a.at(1),
                             (_b = data.regency) === null || _b === void 0 ? void 0 : _b.at(1),
                             (_c = data.district) === null || _c === void 0 ? void 0 : _c.at(1),
                         ].join(', ');
-                        dbEntries.push({ code: c, name: e[1], fullname: fullname });
+                        dbEntries.push([c, name, '3']);
                         return saveData("/trace/".concat(c, ".json"), data);
                     });
                     return [4 /*yield*/, Promise.allSettled(saveDistricsTrace)];
@@ -179,13 +179,13 @@ function main() {
                             district: sourceMap.get(c.substring(0, config_1.DISTRICTS_CODE_LENGTH)),
                             village: e,
                         };
-                        var fullname = [
+                        var name = [
                             (_a = data.province) === null || _a === void 0 ? void 0 : _a.at(1),
                             (_b = data.regency) === null || _b === void 0 ? void 0 : _b.at(1),
                             (_c = data.district) === null || _c === void 0 ? void 0 : _c.at(1),
                             (_d = data.village) === null || _d === void 0 ? void 0 : _d.at(1),
                         ].join(', ');
-                        dbEntries.push({ code: c, name: e[1], fullname: fullname });
+                        dbEntries.push([c, name, '4']);
                         return saveData("/trace/".concat(c, ".json"), data);
                     });
                     return [4 /*yield*/, Promise.allSettled(saveVillagesTrace)];

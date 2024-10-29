@@ -7,12 +7,6 @@ import {
   DISTRICTS_CODE_LENGTH, VILLAGES_CODE_LENGTH
 } from './config';
 
-interface Wilayah {
-  code: string;
-  name: string;
-  fullname: string;
-}
-
 async function getData(): Promise<string[][]> {
   return new Promise((resolve, reject) => {
     const result: string[][] = [];
@@ -85,9 +79,9 @@ async function main() {
   source.forEach((e) => sourceMap.set(e[0], e));
 
   // populating db entries
-  const dbEntries: Wilayah[] = [];
+  const dbEntries: string[][] = [];
   provinces.forEach((e) => {
-    dbEntries.push({ code: e[0], name: e[1], fullname: e[1] });
+    dbEntries.push([e[0], e[1], '1']);
   });
 
   log('Generating static regencies trace..');
@@ -97,11 +91,11 @@ async function main() {
       province: sourceMap.get(c.substring(0, PROVINCES_CODE_LENGTH)),
       regency: e,
     };
-    const fullname = [
+    const name = [
       data.province?.at(1),
       data.regency?.at(1),
     ].join(', ');
-    dbEntries.push({ code: c, name: e[1], fullname });
+    dbEntries.push([c, name, '2']);
     return saveData(`/trace/${c}.json`, data);
   });
   await Promise.allSettled(saveRegenciesTrace);
@@ -114,12 +108,12 @@ async function main() {
       regency: sourceMap.get(c.substring(0, REGENCIES_CODE_LENGTH)),
       district: e,
     };
-    const fullname = [
+    const name = [
       data.province?.at(1),
       data.regency?.at(1),
       data.district?.at(1),
     ].join(', ');
-    dbEntries.push({ code: c, name: e[1], fullname });
+    dbEntries.push([c, name, '3']);
     return saveData(`/trace/${c}.json`, data);
   });
   await Promise.allSettled(saveDistricsTrace);
@@ -133,13 +127,13 @@ async function main() {
       district: sourceMap.get(c.substring(0, DISTRICTS_CODE_LENGTH)),
       village: e,
     };
-    const fullname = [
+    const name = [
       data.province?.at(1),
       data.regency?.at(1),
       data.district?.at(1),
       data.village?.at(1),
     ].join(', ');
-    dbEntries.push({ code: c, name: e[1], fullname });
+    dbEntries.push([c, name, '4']);
     return saveData(`/trace/${c}.json`, data);
   });
   await Promise.allSettled(saveVillagesTrace);
