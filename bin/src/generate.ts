@@ -53,21 +53,21 @@ async function main() {
   log('Generating static provincies..');
   await saveData('/provinces.json', provinces);
 
-  log('Generating static regencies..');
+  log('Generating static filtered regencies..');
   const saveRegencies = provinces.map((p) => {
     const data = regencies.filter((r) => r[0].startsWith(p[0]));
     return saveData(`/regencies/${p[0]}.json`, data);
   });
   await Promise.allSettled(saveRegencies);
 
-  log('Generating static districts..');
+  log('Generating static filtered districts..');
   const saveDistricts = regencies.map((r) => {
     const data = districts.filter((d) => d[0].startsWith(r[0]));
     return saveData(`/districts/${r[0]}.json`, data);
   });
   await Promise.allSettled(saveDistricts);
 
-  log('Generating static villages..');
+  log('Generating static filtered villages..');
   const saveVillages = districts.map((d) => {
     const data = villages.filter((v) => v[0].startsWith(d[0]));
     return saveData(`/villages/${d[0]}.json`, data);
@@ -78,10 +78,10 @@ async function main() {
   const sourceMap = new Map<string, string[]>();
   source.forEach((e) => sourceMap.set(e[0], e));
 
-  // populating db entries
-  const dbEntries: string[][] = [];
+  // populating all regions entries
+  const regions: [code: string, name: string, level: number][] = [];
   provinces.forEach((e) => {
-    dbEntries.push([e[0], e[1], '1']);
+    regions.push([e[0], e[1], 1]);
   });
 
   log('Generating static regencies trace..');
@@ -95,7 +95,7 @@ async function main() {
       data.province?.at(1),
       data.regency?.at(1),
     ].join(', ');
-    dbEntries.push([c, name, '2']);
+    regions.push([c, name, 2]);
     return saveData(`/trace/${c}.json`, data);
   });
   await Promise.allSettled(saveRegenciesTrace);
@@ -113,7 +113,7 @@ async function main() {
       data.regency?.at(1),
       data.district?.at(1),
     ].join(', ');
-    dbEntries.push([c, name, '3']);
+    regions.push([c, name, 3]);
     return saveData(`/trace/${c}.json`, data);
   });
   await Promise.allSettled(saveDistricsTrace);
@@ -133,13 +133,22 @@ async function main() {
       data.district?.at(1),
       data.village?.at(1),
     ].join(', ');
-    dbEntries.push([c, name, '4']);
+    regions.push([c, name, 4]);
     return saveData(`/trace/${c}.json`, data);
   });
   await Promise.allSettled(saveVillagesTrace);
 
-  log('Writing into database..');
-  await saveData('/regions.json', dbEntries);
+  log('Writing static regencies..');
+  await saveData('/regencies.json', regions.filter(e => e[2] == 2));
+
+  log('Writing static districts..');
+  await saveData('/districts.json', regions.filter(e => e[2] == 3));
+
+  log('Writing static villages..');
+  await saveData('/villages.json', regions.filter(e => e[2] == 4));
+
+  log('Writing static regions..');
+  await saveData('/regions.json', regions);
 }
 
 main().then(() => log('Done.'));

@@ -83,7 +83,7 @@ function log(message) {
 }
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var source, provinces, regencies, districts, villages, saveRegencies, saveDistricts, saveVillages, sourceMap, dbEntries, saveRegenciesTrace, saveDistricsTrace, saveVillagesTrace;
+        var source, provinces, regencies, districts, villages, saveRegencies, saveDistricts, saveVillages, sourceMap, regions, saveRegenciesTrace, saveDistricsTrace, saveVillagesTrace;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -100,7 +100,7 @@ function main() {
                     return [4 /*yield*/, saveData('/provinces.json', provinces)];
                 case 2:
                     _a.sent();
-                    log('Generating static regencies..');
+                    log('Generating static filtered regencies..');
                     saveRegencies = provinces.map(function (p) {
                         var data = regencies.filter(function (r) { return r[0].startsWith(p[0]); });
                         return saveData("/regencies/".concat(p[0], ".json"), data);
@@ -108,7 +108,7 @@ function main() {
                     return [4 /*yield*/, Promise.allSettled(saveRegencies)];
                 case 3:
                     _a.sent();
-                    log('Generating static districts..');
+                    log('Generating static filtered districts..');
                     saveDistricts = regencies.map(function (r) {
                         var data = districts.filter(function (d) { return d[0].startsWith(r[0]); });
                         return saveData("/districts/".concat(r[0], ".json"), data);
@@ -116,7 +116,7 @@ function main() {
                     return [4 /*yield*/, Promise.allSettled(saveDistricts)];
                 case 4:
                     _a.sent();
-                    log('Generating static villages..');
+                    log('Generating static filtered villages..');
                     saveVillages = districts.map(function (d) {
                         var data = villages.filter(function (v) { return v[0].startsWith(d[0]); });
                         return saveData("/villages/".concat(d[0], ".json"), data);
@@ -127,9 +127,9 @@ function main() {
                     log('Mapping data source..');
                     sourceMap = new Map();
                     source.forEach(function (e) { return sourceMap.set(e[0], e); });
-                    dbEntries = [];
+                    regions = [];
                     provinces.forEach(function (e) {
-                        dbEntries.push([e[0], e[1], '1']);
+                        regions.push([e[0], e[1], 1]);
                     });
                     log('Generating static regencies trace..');
                     saveRegenciesTrace = regencies.map(function (e) {
@@ -143,7 +143,7 @@ function main() {
                             (_a = data.province) === null || _a === void 0 ? void 0 : _a.at(1),
                             (_b = data.regency) === null || _b === void 0 ? void 0 : _b.at(1),
                         ].join(', ');
-                        dbEntries.push([c, name, '2']);
+                        regions.push([c, name, 2]);
                         return saveData("/trace/".concat(c, ".json"), data);
                     });
                     return [4 /*yield*/, Promise.allSettled(saveRegenciesTrace)];
@@ -163,7 +163,7 @@ function main() {
                             (_b = data.regency) === null || _b === void 0 ? void 0 : _b.at(1),
                             (_c = data.district) === null || _c === void 0 ? void 0 : _c.at(1),
                         ].join(', ');
-                        dbEntries.push([c, name, '3']);
+                        regions.push([c, name, 3]);
                         return saveData("/trace/".concat(c, ".json"), data);
                     });
                     return [4 /*yield*/, Promise.allSettled(saveDistricsTrace)];
@@ -185,15 +185,27 @@ function main() {
                             (_c = data.district) === null || _c === void 0 ? void 0 : _c.at(1),
                             (_d = data.village) === null || _d === void 0 ? void 0 : _d.at(1),
                         ].join(', ');
-                        dbEntries.push([c, name, '4']);
+                        regions.push([c, name, 4]);
                         return saveData("/trace/".concat(c, ".json"), data);
                     });
                     return [4 /*yield*/, Promise.allSettled(saveVillagesTrace)];
                 case 8:
                     _a.sent();
-                    log('Writing into database..');
-                    return [4 /*yield*/, saveData('/regions.json', dbEntries)];
+                    log('Writing static regencies..');
+                    return [4 /*yield*/, saveData('/regencies.json', regions.filter(function (e) { return e[2] == 2; }))];
                 case 9:
+                    _a.sent();
+                    log('Writing static districts..');
+                    return [4 /*yield*/, saveData('/districts.json', regions.filter(function (e) { return e[2] == 3; }))];
+                case 10:
+                    _a.sent();
+                    log('Writing static villages..');
+                    return [4 /*yield*/, saveData('/villages.json', regions.filter(function (e) { return e[2] == 4; }))];
+                case 11:
+                    _a.sent();
+                    log('Writing static regions..');
+                    return [4 /*yield*/, saveData('/regions.json', regions)];
+                case 12:
                     _a.sent();
                     return [2 /*return*/];
             }
