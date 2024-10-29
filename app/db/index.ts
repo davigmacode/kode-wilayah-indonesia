@@ -55,11 +55,12 @@ export const searchByFullname = db.transaction(({
   const level = isValidRegion(type) ? REGION_LEVEL[type] : -1;
   const whereLevel = level != -1 ? `AND level==${level}` : '';
 
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   const entries = db.prepare(`
     SELECT code, name FROM regions
     WHERE name LIKE ? ${whereLevel}
     LIMIT ? OFFSET ?
-  `).all(`%${query}%`, limit, skip);
+  `).all(`%${query}%`, limit, skip).map((e: any) => [e.code, e.name]);
 
   if (limit == -1) return entries;
 
